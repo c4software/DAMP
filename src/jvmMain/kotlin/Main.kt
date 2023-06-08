@@ -69,6 +69,7 @@ fun App() {
 
                         Button(
                             modifier = Modifier.width(110.dp),
+                            enabled = mainState.value.configuration.services.filterValues { it.isLoading() }.isEmpty(),
                             colors = ButtonDefaults.buttonColors(
                                 backgroundColor = when (it.state) {
                                     StateEnum.STARTED -> MaterialTheme.colors.error
