@@ -1,0 +1,34 @@
+home: /Users/valentinbrosseau/projects/damp-ui/damp/docker-stack/
+services:
+  WEB:
+    id: WEB
+    name: Web
+    port: 8080
+    minPort: 8080
+    maxPort: 9099
+    state: STOPPED
+    profile: web
+  DB:
+    id: DB
+    name: Database
+    port: 3306
+    minPort: 3306
+    maxPort: 3316
+    state: STOPPED
+    profile: db
+  PMA:
+    id: PMA
+    name: PhpMyAdmin
+    port: 9090
+    minPort: 9090
+    maxPort: 9099
+    state: STOPPED
+    profile: pma
+  MONGO:
+    id: MONGO
+    name: MongoDB
+    port: 27017
+    minPort: 27017
+    maxPort: 27050
+    state: STOPPED
+    profile: mongo
