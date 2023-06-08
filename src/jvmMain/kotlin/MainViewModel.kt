@@ -53,26 +53,29 @@ object MainViewModel {
      * Lance une commande et retourne le résultat (code de retour + sortie)
      */
     private suspend fun execCommands(commands: List<String>): ProcessResult {
-        return suspendCoroutine {
-            val env = mutableMapOf<String, String>().apply {
-                put("DAMP_HOME_DIRECTORY", _mainState.value.configuration.home)
+        return withContext(Dispatchers.IO) {
+            suspendCoroutine {
 
-                _mainState.value.configuration.services.values.forEach { service ->
-                    put("DAMP_${service.id}_PORT".uppercase(), service.port.toString())
+                val env = mutableMapOf<String, String>().apply {
+                    put("DAMP_HOME_DIRECTORY", _mainState.value.configuration.home)
+
+                    _mainState.value.configuration.services.values.forEach { service ->
+                        put("DAMP_${service.id}_PORT".uppercase(), service.port.toString())
+                    }
                 }
+
+                val process = ProcessBuilder(commands).apply {
+                    directory(File(_mainState.value.configuration.home))
+                    redirectErrorStream(true)
+                    // inheritIO() // Enable this to see the output in the console (for debugging, because its consume the output stream
+                    environment().putAll(env)
+                }.start()
+
+                process.waitFor()
+                it.resume(ProcessResult(process.exitValue(), process.inputStream.bufferedReader().readText()))
+
+                process.destroy()
             }
-
-            val process = ProcessBuilder(commands).apply {
-                directory(File(_mainState.value.configuration.home))
-                redirectErrorStream(true)
-                // inheritIO() // Enable this to see the output in the console (for debugging, because its consume the output stream
-                environment().putAll(env)
-            }.start()
-
-            process.waitFor()
-            it.resume(ProcessResult(process.exitValue(), process.inputStream.bufferedReader().readText()))
-
-            process.destroy()
         }
     }
 
@@ -127,9 +130,9 @@ object MainViewModel {
         val newList = services.associateBy { it.id }.toMutableMap()
         _mainState.update { it.copy(configuration = _mainState.value.configuration.copy(services = newList)) }
 
-        delay(1000)
+        delay(500)
 
-        // On lance ou stoppe les services
+//        // On lance ou stoppe les services
         execCommands(
             mutableListOf("docker", "compose", "--profile", "default").apply {
                 add(if (state == StateEnum.STARTED) "up" else "down")
