@@ -106,9 +106,7 @@ object MainViewModel {
                 },
         )
 
-        if (results.resultCode == 0) {
-            updateService(service.copy(state = state))
-        }
+        updateService(service.copy(state = state))
     }
 
     /**

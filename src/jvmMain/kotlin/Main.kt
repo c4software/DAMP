@@ -99,9 +99,8 @@ fun App() {
                             }
                         ) {
                             when (it.state) {
-                                StateEnum.STARTED -> Text(text = "Arrêter")
-                                StateEnum.STOPPED -> Text(text = "Démarrer")
-                                else -> CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                                StateEnum.STARTED, StateEnum.STARTING -> Text(text = "Arrêter")
+                                StateEnum.STOPPED, StateEnum.STOPPING -> Text(text = "Démarrer")
                             }
                         }
                     }
