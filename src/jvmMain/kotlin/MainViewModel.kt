@@ -4,7 +4,7 @@ import data.models.ProcessResult
 import data.models.Service
 import data.models.StateEnum
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -36,7 +36,7 @@ object MainViewModel {
             _mainState.update { it.copy(configuration = RepositoryEnv.readConfigurationFile(), loading = true) }
 
             // Initialisation des services en fonction de leur état (running ou stopped) via Docker
-            initializeServicesState()
+            getAllServicesState()
 
             // On indique que le chargement est terminé
             _mainState.update { it.copy(loading = false) }
@@ -79,7 +79,7 @@ object MainViewModel {
     /**
      * Initialise les services et leur état
      */
-    private suspend fun initializeServicesState() {
+    private suspend fun getAllServicesState() {
         val results = execCommands(listOf("docker", "compose", "ps", "--services", "--filter", "status=running"))
 
         _mainState.update { it.copy(configuration = _mainState.value.configuration.copy(dockerAvailable = results.resultCode == 0)) }
@@ -91,13 +91,17 @@ object MainViewModel {
         // On met à jour la liste des services
         val newList = servicesWithState.associateBy { it.id }.toMutableMap()
         _mainState.update { it.copy(configuration = _mainState.value.configuration.copy(services = newList)) }
+
+        if (results.output.contains("Cannot connect to the Docker", true) || results.resultCode != 0) {
+            _mainState.update { it.copy(configuration = _mainState.value.configuration.copy(dockerAvailable = false)) }
+        }
     }
 
     /**
      * Démarre ou arrête un service
      */
     suspend fun changeDockerServiceState(service: Service, state: StateEnum) {
-        val results = execCommands(
+        execCommands(
             mutableListOf("docker", "compose", "--profile", service.profile, if (state == StateEnum.STARTED) "up" else "down")
                 .apply {
                     if (state == StateEnum.STARTED) {
@@ -107,6 +111,32 @@ object MainViewModel {
         )
 
         updateService(service.copy(state = state))
+    }
+
+    suspend fun changeStateAll(state: StateEnum = StateEnum.STARTED) {
+        // Calcul du port pour chaque service
+        val services = _mainState.value.configuration.services.values.map {
+            if (!it.isStarted()) {
+                it.copy(port = getAvailablePort(it.minPort, it.maxPort), state = StateEnum.STARTING)
+            } else {
+                it
+            }
+        }
+
+        // On met à jour la liste des services
+        val newList = services.associateBy { it.id }.toMutableMap()
+        _mainState.update { it.copy(configuration = _mainState.value.configuration.copy(services = newList)) }
+
+        delay(1000)
+
+        // On lance ou stoppe les services
+        execCommands(
+            mutableListOf("docker", "compose", "--profile", "default").apply {
+                add(if (state == StateEnum.STARTED) "up" else "down")
+                if (state == StateEnum.STARTED) add("-d")
+            })
+
+        getAllServicesState()
     }
 
     /**

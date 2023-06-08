@@ -3,6 +3,7 @@ services:
   web:
     profiles:
       - web
+      - default
     build:
       dockerfile: php.dockerfile
       context: dockerfiles/
@@ -15,6 +16,7 @@ services:
   db:
     profiles:
       - db
+      - default
     image: mariadb:10.9
     restart: unless-stopped
     ports:
@@ -27,6 +29,7 @@ services:
   pma:
     profiles:
       - pma
+      - default
     image: phpmyadmin
     restart: unless-stopped
     ports:
