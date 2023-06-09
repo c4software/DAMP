@@ -43,7 +43,7 @@ fun App() {
                         Text(text = "DAMP", modifier = Modifier.padding(8.dp))
                     },
                     actions = {
-                        AnimatedContent(mainState.value.configuration.dockerAvailable) {
+                        AnimatedContent(mainState.value.configuration.dockerAvailable && !mainState.value.loading) {
                             Row {
                                 IconButton(onClick = { composableScope.launch { MainViewModel.init() } }) {
                                     Icon(Icons.Default.Refresh, contentDescription = "Refresh")
