@@ -1,5 +1,6 @@
-home: /Users/valentinbrosseau/projects/damp-ui/damp/docker-stack/
-services:
+home: /Users/valentinbrosseau/projects/damp-ui/damp/docker-stack/ # Chemin absolu vers le dossier contenant le docker-compose.yaml
+dockerStackHome: "./" # Relative au fichier docker-compose.yaml
+services: # Liste des services
   WEB:
     id: WEB
     name: Web

@@ -57,7 +57,7 @@ object MainViewModel {
             suspendCoroutine {
 
                 val env = mutableMapOf<String, String>().apply {
-                    put("DAMP_HOME_DIRECTORY", _mainState.value.configuration.home)
+                    put("DAMP_HOME_DIRECTORY", _mainState.value.configuration.dockerStackHome)
 
                     _mainState.value.configuration.services.values.forEach { service ->
                         put("DAMP_${service.id}_PORT".uppercase(), service.port.toString())
